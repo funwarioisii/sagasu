@@ -1,0 +1,10 @@
+awscli
+click
+matplotlib
+jupyter
+notebook
+Sphinx
+flake8
+black
+ginza
+pytest

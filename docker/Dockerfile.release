@@ -1,0 +1,6 @@
+FROM suburi_search-image-base
+
+COPY . /work
+WORKDIR /work
+
+ENTRYPOINT ["/bin/bash"]
