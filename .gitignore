@@ -160,4 +160,4 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-
+!data/sample/sample.txt
