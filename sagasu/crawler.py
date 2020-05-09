@@ -1,16 +1,25 @@
 import datetime
 import os
 from typing import List
+import json
+import re
+from time import sleep
 
 import pandas as pd
 import tweepy
-from sagasu.model import Resource, TwitterResource
+import requests as req
+from tqdm import tqdm
+
+from sagasu.model import Resource, TwitterResource, ScrapboxResource
 from sagasu import util
+from sagasu.config import SourceModel
 
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
 CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
+
+CRAWLER_WORK_DIR = util.SAGASU_WORKDIR + "/crawler"
 
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
@@ -20,9 +29,10 @@ JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
 
 class Crawler:
-  def __init__(self, path_prefix: str):
-    self.path_prefix = path_prefix
+  def __init__(self, source: SourceModel):
+    self.path_prefix = CRAWLER_WORK_DIR
     self.resources: List[Resource] = []
+    self.source = source
 
   def _collect(self) -> List[Resource]:
     raise NotImplementedError("not implemented")
@@ -36,14 +46,15 @@ class Crawler:
 
 
 class CrawlerEngine:
-  def __init__(self):
-    self.crawlers: List[Crawler] = self.register()
+  def __init__(self, sources: List[SourceModel]):
     self.resources = []
+    self.crawlers: List[Crawler] = [self.load_crawler(source) for source in sources]
 
-  def register(self) -> List[Crawler]:
-    return [
-      TwitterFavoriteCrawler()
-    ]
+  def load_crawler(self, source: SourceModel):
+    if source.source_type == "twitter":
+      return TwitterFavoriteCrawler(source)
+    elif source.source_type == "scrapbox":
+      return ScrapboxCrawler(source)
 
   def crawl_all(self):
     for crawler in self.crawlers:
@@ -52,8 +63,9 @@ class CrawlerEngine:
 
 
 class TwitterFavoriteCrawler(Crawler):
-  def __init__(self, path_prefix: str = f"{os.getenv('HOME')}/.sagasu"):
-    super().__init__(path_prefix)
+  def __init__(self, source: SourceModel):
+    super().__init__(source)
+    self.path_prefix += "/twitter"
     self.resources: List[TwitterResource] = []
 
   def _collect(self) -> List[Resource]:
@@ -90,8 +102,12 @@ class TwitterFavoriteCrawler(Crawler):
 
   def _load_favorites(self) -> List[tweepy.models.Status]:
     statuses = []
+    progress_bar = tqdm(total=10)
+    progress_bar.set_description("collecting favorites")
     for n in range(10):
-      statuses += api.favorites('funwarioisii', page=n+1)
+      statuses += api.favorites(self.source.target, page=n+1)
+      progress_bar.update(1)
+
     return statuses
 
   def _dump(self):
@@ -108,7 +124,65 @@ class TwitterFavoriteCrawler(Crawler):
     uri_sentence_pairs = list(map(lambda resource: [resource.uri, resource.sentence], self.resources))
     pd.DataFrame(uri_sentence_pairs, columns=["uri", "sentence"]).to_csv(filename, sep="\t")
 
-    resource_type_prefix = "/media-sentence"
+    resource_type_prefix = "/uri-media"
+    filename = self.path_prefix + resource_type_prefix + filename_prefix + ".tsv"
+    util.mkdir_p(filename)
+
+    def extract(resource: List[str]):
+      _1, _2, _3, _4 = (resource + ["empty", "empty", "empty", "empty"])[:4]
+      return _1, _2, _3, _4
+
+    uri_media_pairs = list(
+      map(
+        lambda resource: [resource.uri] + list(extract(resource.image_urls)) + list(extract(resource.image_captions)),
+        self.resources))
+    pd.DataFrame(
+      uri_media_pairs,
+      columns=[
+        "uri",
+        "media_url1", "media_url2", "media_url3", "media_url4",
+        "media_caption1", "media_caption2", "media_caption3", "media_caption4"]) \
+      .to_csv(filename, sep="\t")
+    return
+
+
+class ScrapboxCrawler(Crawler):
+  def __init__(self, source: SourceModel):
+    super().__init__(source=source)
+    self.path_prefix += "/scrapbox"
+    self.target = self.source.target
+
+  def _collect(self) -> List[ScrapboxResource]:
+    res = req.get(page_url := f"https://scrapbox.io/api/pages/{self.target}")
+    resources = []
+    pages = json.loads(res.text)['pages']
+    progress_bar = tqdm(total=len(pages))
+    progress_bar.set_description("collecting scrapbox")
+    for page in pages:
+      title = t if not "/" in (t := page['title']) else t.replace("/", "%2F")
+      page = json.loads(req.get(uri := f"{page_url}/{title}").text)
+      sentence = ' '.join(lines := list(map(lambda p: p['text'], page['lines'])))
+      image_uris = [s[1:-1] for s in lines if re.match(r'\[https://gyazo.com', s)]
+      image_captions = ["empty" for _ in image_uris]
+      resources.append(ScrapboxResource(uri=uri, sentence=sentence, image_urls=image_uris, image_captions=image_captions))
+      sleep(0.5)
+      progress_bar.update(1)
+    return resources
+
+  def _dump(self):
+    t = datetime.datetime.now(JST)
+    filename_prefix = f"/{t.year}-" \
+                      f"{m if len(m := str(t.month)) == 2 else f'0{m}'}-" \
+                      f"{d if len(d := str(t.day)) == 2 else f'0{d}'}-" \
+                      f"{h if len(h := str(t.hour)) == 2 else f'{h}'}"
+    resource_type_prefix = "/uri-sentence"
+
+    filename = self.path_prefix + resource_type_prefix + filename_prefix + ".tsv"
+    util.mkdir_p(filename)
+    uri_sentence_pairs = list(map(lambda resource: [resource.uri, resource.sentence], self.resources))
+    pd.DataFrame(uri_sentence_pairs, columns=["uri", "sentence"]).to_csv(filename, sep="\t")
+
+    resource_type_prefix = "/uri-media"
     filename = self.path_prefix + resource_type_prefix + filename_prefix + ".tsv"
     util.mkdir_p(filename)
 

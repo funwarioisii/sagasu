@@ -29,3 +29,9 @@ class SampleResource(Resource):
 class TwitterResource(Resource):
   image_urls: Union[List[str], None]
   image_captions: Union[List[str], None]
+
+
+@dataclass
+class ScrapboxResource(Resource):
+  image_urls: Union[List[str], None]
+  image_captions: Union[List[str], None]

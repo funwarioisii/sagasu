@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sagasu"
-version = "0.1.5"
+version = "0.2"
 description = "sagasu is search all my contents"
 authors = ["funwarioisii"]
 license = "MIT"
