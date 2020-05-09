@@ -1,9 +1,9 @@
 import click
 
-from sagasu.engine import SearchEngine
-from sagasu.crawler import CrawlerEngine
-from sagasu.config import Config
 from sagasu import util as u
+from sagasu.config import Config
+from sagasu.crawler import CrawlerEngine
+from sagasu.engine import SearchEngine
 
 
 @click.command()
@@ -20,10 +20,9 @@ def app(mode):
   config = Config().load()
   engine = SearchEngine(config)
 
-  if mode == "crawl":
+  if mode == "indexing":
     crawler_engine = CrawlerEngine(config.sources)
     crawler_engine.crawl_all()
-  elif mode == "indexing":
     engine.indexing()
   elif mode == "search":
     word = input("let's type search word >>> ")
