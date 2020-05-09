@@ -1,18 +1,32 @@
+import pickle
+from functools import reduce
+from pathlib import Path
 from typing import List
 
-from sagasu.indexer import WordNgramIndexer
-from sagasu.repository import Repository, SampleRepository, TwitterRepository, ScrapboxRepository
-from sagasu.model import Resource, IndexedResource
 from sagasu.config import ConfigModel, SourceModel
+from sagasu.indexer import WordNgramIndexer
+from sagasu.model import Resource, IndexedResource
+from sagasu.repository import Repository, TwitterRepository, ScrapboxRepository
+from sagasu.util import SAGASU_WORKDIR
 
 
 class SearchEngine:
   def __init__(self, config: ConfigModel):
     self.indexers = [WordNgramIndexer(n=1), WordNgramIndexer(n=2), WordNgramIndexer(n=3)]
-    self.indexed_resource = IndexedResource()
+    self.indexed_resource = self.load_indexed() if Path(f"{SAGASU_WORKDIR}/indexed") else IndexedResource()
     self.config = config
     self.repositories: List[Repository] = \
-        [self.load_repository(source) for source in self.config.sources]
+      [self.load_repository(source) for source in self.config.sources]
+
+  def load_indexed(self):
+    p = reduce(
+      lambda pre, cur: max(pre, cur, key=lambda f: f.stat().st_ctime),
+      [p for p in Path(f"{SAGASU_WORKDIR}/indexed").iterdir()]
+    )
+    p.absolute()
+    with p.open('rb') as f:
+      indexed = pickle.load(f)
+    return indexed
 
   @staticmethod
   def load_repository(source: SourceModel) -> Repository:
