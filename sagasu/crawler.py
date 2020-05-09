@@ -1,18 +1,18 @@
 import datetime
-import os
-from typing import List
 import json
+import os
 import re
 from time import sleep
+from typing import List
 
 import pandas as pd
-import tweepy
 import requests as req
+import tweepy
 from tqdm import tqdm
 
-from sagasu.model import Resource, TwitterResource, ScrapboxResource
 from sagasu import util
 from sagasu.config import SourceModel
+from sagasu.model import Resource, TwitterResource, ScrapboxResource
 
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
 CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
@@ -20,10 +20,6 @@ ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 
 CRAWLER_WORK_DIR = util.SAGASU_WORKDIR + "/crawler"
-
-auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-api = tweepy.API(auth)
 
 JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
@@ -101,6 +97,10 @@ class TwitterFavoriteCrawler(Crawler):
       raise NotImplementedError("not implemented")
 
   def _load_favorites(self) -> List[tweepy.models.Status]:
+    auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+    api = tweepy.API(auth)
+
     statuses = []
     progress_bar = tqdm(total=10)
     progress_bar.set_description("collecting favorites")
