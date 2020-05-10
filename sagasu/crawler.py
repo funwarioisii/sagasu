@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import re
+from pathlib import Path
 from time import sleep
 from typing import List
 
@@ -10,9 +11,9 @@ import requests as req
 import tweepy
 from tqdm import tqdm
 
+from sagasu import model as m
 from sagasu import util
 from sagasu.config import SourceModel
-from sagasu.model import Resource, TwitterResource, ScrapboxResource
 
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
 CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
@@ -27,10 +28,10 @@ JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 class Crawler:
   def __init__(self, source: SourceModel):
     self.path_prefix = CRAWLER_WORK_DIR
-    self.resources: List[Resource] = []
+    self.resources: List[m.Resource] = []
     self.source = source
 
-  def _collect(self) -> List[Resource]:
+  def _collect(self) -> List[m.Resource]:
     raise NotImplementedError("not implemented")
 
   def _dump(self):
@@ -62,9 +63,9 @@ class TwitterFavoriteCrawler(Crawler):
   def __init__(self, source: SourceModel):
     super().__init__(source)
     self.path_prefix += "/twitter"
-    self.resources: List[TwitterResource] = []
+    self.resources: List[m.TwitterResource] = []
 
-  def _collect(self) -> List[Resource]:
+  def _collect(self) -> List[m.Resource]:
     statuses: List[tweepy.models.Status] = self._load_favorites()
 
     resources = []
@@ -81,7 +82,7 @@ class TwitterFavoriteCrawler(Crawler):
           media_urls.append(media_url)
           media_captions.append(media_caption)
 
-      resources.append(TwitterResource(
+      resources.append(m.TwitterResource(
         uri=uri,
         sentence=sentence,
         image_urls=media_urls,
@@ -152,7 +153,7 @@ class ScrapboxCrawler(Crawler):
     self.path_prefix += "/scrapbox"
     self.target = self.source.target
 
-  def _collect(self) -> List[ScrapboxResource]:
+  def _collect(self) -> List[m.ScrapboxResource]:
     res = req.get(page_url := f"https://scrapbox.io/api/pages/{self.target}")
     resources = []
     pages = json.loads(res.text)['pages']
@@ -164,7 +165,7 @@ class ScrapboxCrawler(Crawler):
       sentence = ' '.join(lines := list(map(lambda p: p['text'], page['lines'])))
       image_uris = [s[1:-1] for s in lines if re.match(r'\[https://gyazo.com', s)]
       image_captions = ["empty" for _ in image_uris]
-      resources.append(ScrapboxResource(uri=uri, sentence=sentence, image_urls=image_uris, image_captions=image_captions))
+      resources.append(m.ScrapboxResource(uri=uri, sentence=sentence, image_urls=image_uris, image_captions=image_captions))
       sleep(0.5)
       progress_bar.update(1)
     return resources
@@ -172,7 +173,7 @@ class ScrapboxCrawler(Crawler):
   def _dump(self):
     t = datetime.datetime.now(JST)
     filename_prefix = f"/{t.year}-" \
-                      f"{m if len(m := str(t.month)) == 2 else f'0{m}'}-" \
+                      f"{mo if len(mo := str(t.month)) == 2 else f'0{mo}'}-" \
                       f"{d if len(d := str(t.day)) == 2 else f'0{d}'}-" \
                       f"{h if len(h := str(t.hour)) == 2 else f'{h}'}"
     resource_type_prefix = "/uri-sentence"
@@ -202,3 +203,21 @@ class ScrapboxCrawler(Crawler):
         "media_caption1", "media_caption2", "media_caption3", "media_caption4"]) \
       .to_csv(filename, sep="\t")
     return
+
+
+class SlackCrawler(Crawler):
+  def __init__(self, source: SourceModel):
+    super().__init__(source)
+    self.path_prefix += "/slack"
+
+  def _collect(self) -> List[m.SlackResource]:
+    for workspace in Path(self.path_prefix).iterdir():
+      for file in workspace.iterdir():
+        if not file.is_file():
+          continue
+        with file.open() as f:
+          d = json.load(f)  # [{type: "text", attachments: [{title: "title", text: "text", }]}]
+    pass
+
+  def _dump(self):
+    pass

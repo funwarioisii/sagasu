@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, NamedTuple, TypedDict, Union
+from typing import List, TypedDict, Union
 
 
 @dataclass
@@ -35,3 +35,8 @@ class TwitterResource(Resource):
 class ScrapboxResource(Resource):
   image_urls: Union[List[str], None]
   image_captions: Union[List[str], None]
+
+
+@dataclass
+class SlackResource(Resource):
+  pass
