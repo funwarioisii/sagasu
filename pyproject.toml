@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sagasu"
-version = "0.2"
+version = "0.2.3"
 description = "sagasu is search all my contents"
 authors = ["funwarioisii"]
 license = "MIT"
@@ -8,6 +8,12 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.8"
 tweepy = "^3.8.0"
+click = "^7.1.2"
+pyyaml = "^5.3.1"
+pandas = "^1.0.3"
+spacy = "^2.2.4"
+tqdm = "^4.46.0"
+ginza = "^3.1.2"
 
 [tool.poetry.dev-dependencies]
 

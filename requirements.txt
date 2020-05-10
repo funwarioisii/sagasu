@@ -6,4 +6,7 @@ tweepy~=3.8.0
 pandas~=1.0.3
 jsonnet
 spacy~=2.2.4
-pyyaml
+pyyaml~=5.3.1
+sagasu~=0.2
+requests~=2.23.0
+tqdm~=4.46.0

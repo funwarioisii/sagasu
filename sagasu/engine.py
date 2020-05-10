@@ -13,7 +13,7 @@ from sagasu.util import SAGASU_WORKDIR
 class SearchEngine:
   def __init__(self, config: ConfigModel):
     self.indexers = [WordNgramIndexer(n=1), WordNgramIndexer(n=2), WordNgramIndexer(n=3)]
-    self.indexed_resource = self.load_indexed() if Path(f"{SAGASU_WORKDIR}/indexed") else IndexedResource()
+    self.indexed_resource = self.load_indexed() if Path(f"{SAGASU_WORKDIR}/indexed").exists() else IndexedResource()
     self.config = config
     self.repositories: List[Repository] = \
       [self.load_repository(source) for source in self.config.sources]

@@ -140,3 +140,8 @@ clean-image: ## remove Docker image
 format:
 	- black scripts
 	- black $(PROJECT_NAME)
+
+e2e:
+	- pip install -U .
+	- sagasu indexing
+	- sagasu search script
