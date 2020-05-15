@@ -37,6 +37,18 @@ sources:
       target: <target project name>
 ```
 
+## daemon
+
+<details>
+<summary>macOS</summary>
+
+using launchd, set `example/me.funwarioisii.sagasu.plist` to `~/Library/LaunchAgents/me.funwarioisii.sagasu.plist`
+
+`launchctl load ~/Library/LaunchAgents/me.funwarioisii.sagasu.plist`
+
+</details>
+
+
 # Credits
 
 This package was created with [Cookiecutter](https://github.com/audreyr/cookiecutter) and the [cookiecutter-docker-science](https://docker-science.github.io/) project template.

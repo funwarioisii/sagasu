@@ -1,7 +1,7 @@
 import click
 
 from sagasu import util as u
-from sagasu.config import Config
+from sagasu.config import ConfigUtil
 from sagasu.crawler import CrawlerEngine
 from sagasu.engine import SearchEngine
 
@@ -17,7 +17,7 @@ def app(mode):
     print("please set ~/.sagasu/config/config.yml")
     return
 
-  config = Config().load()
+  config = ConfigUtil().load()
   engine = SearchEngine(config)
 
   if mode == "indexing":

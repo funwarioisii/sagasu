@@ -17,7 +17,7 @@ class ConfigModel:
   sources: List[SourceModel]
 
 
-class Config:
+class ConfigUtil:
   def __init__(self):
     self.path = f"{util.SAGASU_WORKDIR}/config/config.yml"
 
