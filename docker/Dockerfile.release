@@ -1,4 +1,4 @@
-FROM suburi_search-image-base
+FROM sagasu-image-base
 
 COPY . /work
 WORKDIR /work

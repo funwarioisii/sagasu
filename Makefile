@@ -50,7 +50,7 @@ export PWD=`pwd`
 export PRINT_HELP_PYSCRIPT
 export START_DOCKER_CONTAINER
 export PYTHONPATH=$PYTHONPATH:$(PWD)
-export PROJECT_NAME=suburi_search
+export PROJECT_NAME=sagasu
 export MODE=dev
 export BASE_DOCKERFILE=docker/Dockerfile
 export DOCKERFILE=$(BASE_DOCKERFILE).$(MODE)
@@ -63,7 +63,7 @@ export JUPYTER_CONTAINER_PORT=8888
 export PYTHON=python3
 
 ###########################################################################################################
-## ADD TARGETS SPECIFIC TO "suburi-search"
+## ADD TARGETS SPECIFIC TO "sagasu"
 ###########################################################################################################
 
 
@@ -105,7 +105,7 @@ test: ## run test cases in tests directory
 	pytest
 
 lint: ## check style with flake8
-	flake8 suburi_search
+	flake8 sagasu
 
 profile: ## show profile of the project
 	@echo "CONTAINER_NAME: $(CONTAINER_NAME)"

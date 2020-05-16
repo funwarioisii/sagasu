@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sagasu"
-version = "0.4.3"
+version = "0.4.10"
 description = "sagasu is search all my contents"
 authors = ["funwarioisii"]
 license = "MIT"
@@ -14,8 +14,6 @@ pandas = "^1.0.3"
 spacy = "^2.2.4"
 tqdm = "^4.46.0"
 ginza = "^3.1.2"
-tensorflow = "^2.2.0"
-tensorflow_hub = "^0.8.0"
 pillow = "^7.1.2"
 numpy = "^1.18.4"
 
@@ -27,3 +25,5 @@ sagasu = 'sagasu.app:app'
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
+[tool.poetry.extras]
+caption = ["tensorflow"]

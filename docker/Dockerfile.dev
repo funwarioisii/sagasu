@@ -1,4 +1,4 @@
-FROM suburi_search-image-base
+FROM sagasu-image-base
 
 COPY ./requirements_dev.txt /requirements_dev.txt
 RUN pip install -r /requirements_dev.txt
