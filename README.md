@@ -2,6 +2,8 @@
 
 Search from any resources(constructed by URI and sentence) in CLI.
 
+let's `pip install sagasu`
+
 ## Requirements
  - python (>=3.8)
  - (Optional) Twitter Developer token and keys
@@ -10,9 +12,10 @@ Search from any resources(constructed by URI and sentence) in CLI.
 ## will support
 
 looking for
-  - [x] my likes in Twitter
-  - [ ] my speaking in Slack
-  - [x] my note in Scrapbox
+  - [x] likes in Twitter
+  - [ ] chat log in Slack
+  - [x] pages in Scrapbox
+
 
 
 # how to run
@@ -26,8 +29,16 @@ looking for
  4. `sagasu indexing`
  5. `sagasu search`
  
- ## config file
- Set `config.yml` under `$HOME/.sagasu/config`
+## image captioning(experimental)
+if you enable caption feature, `sagasu` search any images.
+
+`pip install sagasu[cation]`
+
+and `SAGASU_CAPTION=true sagasu indexing`. 
+ 
+ 
+## config file
+Set `config.yml` under `$HOME/.sagasu/config`
 
 ```yaml
 sources:

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sagasu"
-version = "0.4.10"
+version = "0.4.12"
 description = "sagasu is search all my contents"
 authors = ["funwarioisii"]
 license = "MIT"
@@ -16,6 +16,8 @@ tqdm = "^4.46.0"
 ginza = "^3.1.2"
 pillow = "^7.1.2"
 numpy = "^1.18.4"
+tensorflow = {version = "^2.2.0", optional = true}
+
 
 [tool.poetry.dev-dependencies]
 
