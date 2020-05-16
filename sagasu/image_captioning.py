@@ -58,39 +58,32 @@ class RNNDecoder(tf.keras.Model):
     return tf.zeros((batch_size, self.units))
 
 
-if __name__ == '__main__':
-  images = tf.random.normal([1, 224, 224, 3])
-
+def image_captioning(image) -> str:
   image_model = tf.keras.applications.MobileNetV2(
-    include_top=False, weights='imagenet')
+    include_top=False, weights='imagenet', input_shape=[224, 224, 3])
   new_input = image_model.input
   hidden_layer = image_model.layers[-1].output
 
   image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
-  features = image_features_extract_model(images)
+  features = image_features_extract_model(image)
   features = tf.reshape(features, (features.shape[0], -1, features.shape[3]))
 
   enc = CNNEncoder(embedding_dim=256)
   dec = RNNDecoder(embedding_dim=256, units=512, vocab_size=9880)
 
-  dec.load_weights('../model/dec/dec_save_weights')
+  dec.load_weights('model/dec/dec_save_weights')
 
-  enc.load_weights("../model/enc/enc_save_weights")
+  enc.load_weights("model/enc/enc_save_weights")
   encoded = enc(features)
   hidden = dec.reset_state(batch_size=1)
-  print(encoded.shape)
 
-  with open('../model/tokenize/token.json') as f:
+  with open('model/tokenize/token.json') as f:
     s = f.readline()
   tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(s)
-  print((iw := tokenizer.index_word)[0], iw[1], iw[2], iw[3])
-
   result = []
   dec_input = tf.expand_dims([tokenizer.word_index['<start>']], 0)
 
   for i in range(100):
-    print(result)
-    print(dec_input.shape, features.shape, hidden.shape)
     predictions, hidden, attention_weights = dec(dec_input, encoded, hidden)
 
     predicted_id = tf.random.categorical(predictions, 1)[0][0].numpy()
@@ -100,3 +93,11 @@ if __name__ == '__main__':
       break
     else:
       dec_input = tf.expand_dims([predicted_id], 0)
+  return ''.join(result)[:-5]
+
+
+if __name__ == '__main__':
+  _images = tf.random.normal([1, 224, 224, 3])
+
+  res = image_captioning(_images)
+  print(res)

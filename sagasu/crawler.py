@@ -7,13 +7,16 @@ from time import sleep
 from typing import List
 
 import pandas as pd
+import requests
 import requests as req
+import tensorflow as tf
 import tweepy
 from tqdm import tqdm
 
 from sagasu import model as m
 from sagasu import util
 from sagasu.config import SourceModel
+from sagasu.image_captioning import image_captioning
 
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
 CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
@@ -78,7 +81,7 @@ class TwitterFavoriteCrawler(Crawler):
       if 'media' in status.entities:
         for media in status.extended_entities['media']:
           media_url = media['media_url']
-          media_caption = self._image_captioning(media_url)
+          media_caption = self._image_captioning(media_url) if os.getenv("SAGASU_IMAGE_CAPTIONING") else "empty"
           media_urls.append(media_url)
           media_captions.append(media_caption)
 
@@ -92,10 +95,12 @@ class TwitterFavoriteCrawler(Crawler):
     return resources
 
   def _image_captioning(self, media_url: str) -> str:
-    if not ((e := 'SAGASU_IMAGE_CAPTIONING') in os.environ and os.environ[e]):
-      return "empty"
-    else:
-      raise NotImplementedError("not implemented")
+    image = tf.image.decode_image(requests.get(media_url).content, channels=3, dtype=tf.float32)
+    l = m if (m := max(image.shape)) > 224 else 224
+    image = tf.image.resize_with_crop_or_pad(image, target_height=l, target_width=l)
+    image = tf.image.resize(image, size=(224, 224))
+    image = tf.reshape(image, [1, 224, 224, 3])
+    return image_captioning(image)
 
   def _load_favorites(self) -> List[tweepy.models.Status]:
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
@@ -106,7 +111,7 @@ class TwitterFavoriteCrawler(Crawler):
     progress_bar = tqdm(total=10)
     progress_bar.set_description("collecting favorites")
     for n in range(10):
-      statuses += api.favorites(self.source.target, page=n+1)
+      statuses += api.favorites(self.source.target, page=n + 1)
       progress_bar.update(1)
 
     return statuses
@@ -165,7 +170,8 @@ class ScrapboxCrawler(Crawler):
       sentence = ' '.join(lines := list(map(lambda p: p['text'], page['lines'])))
       image_uris = [s[1:-1] for s in lines if re.match(r'\[https://gyazo.com', s)]
       image_captions = ["empty" for _ in image_uris]
-      resources.append(m.ScrapboxResource(uri=uri, sentence=sentence, image_urls=image_uris, image_captions=image_captions))
+      resources.append(
+        m.ScrapboxResource(uri=uri, sentence=sentence, image_urls=image_uris, image_captions=image_captions))
       sleep(0.5)
       progress_bar.update(1)
     return resources

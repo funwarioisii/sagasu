@@ -11,3 +11,5 @@ sagasu~=0.2
 requests~=2.23.0
 tqdm~=4.46.0
 tensorflow~=2.2.0
+pillow~=7.1.2
+numpy~=1.18.4
