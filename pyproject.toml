@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sagasu"
-version = "0.4.12"
+version = "0.4.13"
 description = "sagasu is search all my contents"
 authors = ["funwarioisii"]
 license = "MIT"
@@ -29,3 +29,4 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry.extras]
 caption = ["tensorflow"]
+ui = ["streamlit"]

@@ -14,6 +14,7 @@ from tqdm import tqdm
 from sagasu import model as m
 from sagasu import util
 from sagasu.config import SourceModel
+from sagasu.model import DummyResource
 
 if os.getenv('SAGASU_CAPTION'):
     from sagasu.image_captioning import image_captioning_from_url
@@ -49,21 +50,14 @@ class Crawler:
         return image_captioning_from_url(media_url)
 
 
-class CrawlerEngine:
-    def __init__(self, sources: List[SourceModel]):
-        self.resources = []
-        self.crawlers: List[Crawler] = [self.load_crawler(source) for source in sources]
+class DummyCrawler(Crawler):
+    def _collect(self) -> List[m.Resource]:
+        return [
+            DummyResource(uri="dummy", sentence="ある晴れた日のこと。魔法以上の愉快が限りなく降り注ぐ不可能じゃないわ。")
+        ]
 
-    def load_crawler(self, source: SourceModel):
-        if source.source_type == "twitter":
-            return TwitterFavoriteCrawler(source)
-        elif source.source_type == "scrapbox":
-            return ScrapboxCrawler(source)
-
-    def crawl_all(self):
-        for crawler in self.crawlers:
-            crawler()
-            self.resources += crawler.resources
+    def _dump(self):
+        pass
 
 
 class TwitterFavoriteCrawler(Crawler):
@@ -119,13 +113,7 @@ class TwitterFavoriteCrawler(Crawler):
         return statuses
 
     def _dump(self):
-        t = datetime.datetime.now(JST)
-        filename_prefix = (
-            f"/{t.year}-"
-            f"{m if len(m := str(t.month)) == 2 else f'0{m}'}-"
-            f"{d if len(d := str(t.day)) == 2 else f'0{d}'}-"
-            f"{h if len(h := str(t.hour)) == 2 else f'{h}'}"
-        )
+        filename_prefix = datetime.datetime.now(JST).strftime("/%Y-%m-%d-%H")
         resource_type_prefix = "/uri-sentence"
 
         filename = self.path_prefix + resource_type_prefix + filename_prefix + ".tsv"
@@ -184,14 +172,14 @@ class ScrapboxCrawler(Crawler):
         progress_bar = tqdm(total=len(pages))
         progress_bar.set_description("collecting scrapbox")
         for page in pages:
-            title = t if not "/" in (t := page["title"]) else t.replace("/", "%2F")
-            page = json.loads(req.get(uri := f"{page_url}/{title}").text)
+            title = t if "/" not in (t := page["title"]) else t.replace("/", "%2F")
+            page = json.loads(req.get(f"{page_url}/{title}").text)
             sentence = " ".join(lines := list(map(lambda p: p["text"], page["lines"])))
             image_uris = [s[1:-1] for s in lines if re.match(r"\[https://gyazo.com", s)]
             image_captions = ["empty" for _ in image_uris]
             resources.append(
                 m.ScrapboxResource(
-                    uri=uri,
+                    uri=f"https://scrapbox.io/{self.target}/{title}",
                     sentence=sentence,
                     image_urls=image_uris,
                     image_captions=image_captions,
@@ -202,13 +190,7 @@ class ScrapboxCrawler(Crawler):
         return resources
 
     def _dump(self):
-        t = datetime.datetime.now(JST)
-        filename_prefix = (
-            f"/{t.year}-"
-            f"{mo if len(mo := str(t.month)) == 2 else f'0{mo}'}-"
-            f"{d if len(d := str(t.day)) == 2 else f'0{d}'}-"
-            f"{h if len(h := str(t.hour)) == 2 else f'{h}'}"
-        )
+        filename_prefix = datetime.datetime.now(JST).strftime("/%Y-%m-%d-%H")
         resource_type_prefix = "/uri-sentence"
 
         filename = self.path_prefix + resource_type_prefix + filename_prefix + ".tsv"

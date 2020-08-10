@@ -2,6 +2,8 @@
 
 Search from any resources(constructed by URI and sentence) in CLI.
 
+**Change direction: Search from Scrapbox articles in CLI.** 
+
 let's `pip install sagasu`
 
 ## Requirements
@@ -9,11 +11,10 @@ let's `pip install sagasu`
  - (Optional) Twitter Developer token and keys
     - need to crawl your favorite
 
-## will support
+## now supporting
 
 looking for
   - [x] likes in Twitter
-  - [ ] chat log in Slack
   - [x] pages in Scrapbox
 
 
@@ -47,17 +48,6 @@ sources:
     - source_type: scrapbox
       target: <target project name>
 ```
-
-## daemon
-
-<details>
-<summary>macOS</summary>
-
-using launchd, set `example/me.funwarioisii.sagasu.plist` to `~/Library/LaunchAgents/me.funwarioisii.sagasu.plist`
-
-`launchctl load ~/Library/LaunchAgents/me.funwarioisii.sagasu.plist`
-
-</details>
 
 
 # Credits

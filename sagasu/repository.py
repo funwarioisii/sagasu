@@ -17,12 +17,9 @@ class SampleRepository(Repository):
     def __init__(self):
         u.mkdir_p((p := f"{u.SAGASU_WORKDIR}/sample/sample.txt"))
         with open(p, "w") as f:
-            f.write(
-                """
-吾輩は猫である。
+            f.write("""吾輩は猫である。
 親譲りの無鉄砲で小供の時から損ばかりしている。
-"""
-            )
+""")
 
     def load(self) -> List[m.SampleResource]:
         with open(p := f"{u.SAGASU_WORKDIR}/sample/sample.txt") as f:
@@ -119,3 +116,10 @@ class ScrapboxRepository(Repository):
         ]
 
         return resources
+
+
+class DummyRepository(Repository):
+    def load(self) -> List[m.Resource]:
+        return [
+            m.DummyResource(uri="dummy", sentence="dummy"),
+            m.DummyResource(uri="dummy2", sentence="this is a dummy resource")]

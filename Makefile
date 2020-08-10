@@ -87,9 +87,6 @@ init-docker-no-cache: ## initialize docker image without cache
 	$(DOCKER) build --no-cache -t $(BASE_IMAGE_NAME) -f $(BASE_DOCKERFILE) --build-arg UID=$(shell id -u) .
 	$(DOCKER) build -t $(IMAGE_NAME) -f $(DOCKERFILE) .
 
-sync-to-source: ## sync local data to data source
-	-aws s3 sync ./data/ $(DATA_SOURCE)
-
 create-container: ## create docker container
 	$(DOCKER) run -it -v $(PWD):/work -p $(JUPYTER_HOST_PORT):$(JUPYTER_CONTAINER_PORT) --name $(CONTAINER_NAME) $(IMAGE_NAME)
 
@@ -99,7 +96,7 @@ start-container: ## start docker container
 	$(DOCKER) attach $(CONTAINER_NAME)
 
 jupyter: ## start Jupyter Notebook server
-	jupyter-notebook --ip=0.0.0.0 --port=${JUPYTER_CONTAINER_PORT}
+	jupyter lab --ip=0.0.0.0 --port=${JUPYTER_CONTAINER_PORT}
 
 test: ## run test cases in tests directory
 	pytest

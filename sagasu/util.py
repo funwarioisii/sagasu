@@ -1,7 +1,9 @@
+import datetime
 import os
 from pathlib import Path
 
 SAGASU_WORKDIR = f"{os.getenv('HOME')}/.sagasu"
+JST = datetime.timezone(datetime.timedelta(hours=+9), "JST")
 
 
 def mkdir_p(file_path):

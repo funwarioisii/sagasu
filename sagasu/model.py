@@ -1,5 +1,11 @@
-from dataclasses import dataclass
-from typing import List, TypedDict, Union
+import datetime
+import json
+from dataclasses import dataclass, asdict
+from typing import List, Union, Dict
+
+from sagasu.util import SAGASU_WORKDIR, mkdir_p
+
+JST = datetime.timezone(datetime.timedelta(hours=+9), "JST")
 
 
 @dataclass
@@ -26,9 +32,13 @@ class TokenizedResource:
 
 
 @dataclass
-class IndexedResource(TypedDict):
-    index: str
-    resource: List[Resource]
+class IndexedResource:
+    indexed: Dict[str, List[Resource]]
+
+    def dump(self):
+        mkdir_p(file_path := f"{SAGASU_WORKDIR}/indexed/{datetime.datetime.now(JST).strftime('%Y-%m-%d-%H')}.json")
+        with open(file_path, "w") as f:
+            f.write(json.dumps(asdict(self)))
 
 
 @dataclass
@@ -63,3 +73,12 @@ class ScrapboxResource(Resource):
 @dataclass
 class SlackResource(Resource):
     pass
+
+
+@dataclass
+class DummyResource(Resource):
+    def __hash__(self):
+        return super().__hash__()
+
+    def __eq__(self, other):
+        return super().__eq__(other)
