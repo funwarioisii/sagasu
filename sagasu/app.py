@@ -25,12 +25,12 @@ def app(mode):
         # crawler_engine = CrawlerEngine(config.sources)
         # crawler_engine.crawl_all()
         search_engine.reduce_indexing_stream()
-        search_engine.indexed_resource.dump()
+        # search_engine.indexed_resource.dump()
     elif mode == "search":
         word = input("let's type search word >>> ")
         resources = search_engine.word_search(word)
         if not resources:
-            print(f"unknow word")
+            print(f"unknown word")
             print(f"{search_engine.indexed_resource.indexed.keys()}")
         resources = set(resources)
         for resource in resources:

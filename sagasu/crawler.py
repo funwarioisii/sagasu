@@ -2,7 +2,7 @@ import datetime
 import json
 import os
 import re
-from pathlib import Path
+from functools import reduce
 from time import sleep
 from typing import List
 
@@ -166,15 +166,26 @@ class ScrapboxCrawler(Crawler):
         self.target = self.source.target
 
     def _collect(self) -> List[m.ScrapboxResource]:
-        res = req.get(page_url := f"https://scrapbox.io/api/pages/{self.target}")
+        skip = 0
+        limit = 100
+        page_url = f"https://scrapbox.io/api/pages/{self.target}"
+
+        responses = [req.get(f"{page_url}?skip={skip}&limit={limit}")]
+        count = json.loads(responses[0].text)['count']
+        skip += limit
+        while count > skip:
+            responses.append(req.get(f"{page_url}?skip={skip}&limit={limit}"))
+            skip += limit
+
         resources = []
-        pages = json.loads(res.text)["pages"]
+        pages = reduce(lambda x, y: x + y, [json.loads(res.text)['pages'] for res in responses])
         progress_bar = tqdm(total=len(pages))
         progress_bar.set_description("collecting scrapbox")
         for page in pages:
             title = t if "/" not in (t := page["title"]) else t.replace("/", "%2F")
             page = json.loads(req.get(f"{page_url}/{title}").text)
-            sentence = " ".join(lines := list(map(lambda p: p["text"], page["lines"])))
+            sentence = " ".join(lines := list(
+                map(lambda p: p.get("text"), page.get("lines") if page.get("lines") is not None else [])))
             image_uris = [s[1:-1] for s in lines if re.match(r"\[https://gyazo.com", s)]
             image_captions = ["empty" for _ in image_uris]
             resources.append(
@@ -233,23 +244,3 @@ class ScrapboxCrawler(Crawler):
             ],
         ).to_csv(filename, sep="\t")
         return
-
-
-class SlackCrawler(Crawler):
-    def __init__(self, source: SourceModel):
-        super().__init__(source)
-        self.path_prefix += "/slack"
-
-    def _collect(self) -> List[m.SlackResource]:
-        for workspace in Path(self.path_prefix).iterdir():
-            for file in workspace.iterdir():
-                if not file.is_file():
-                    continue
-                with file.open() as f:
-                    d = json.load(
-                        f
-                    )  # [{type: "text", attachments: [{title: "title", text: "text", }]}]
-        pass
-
-    def _dump(self):
-        pass
