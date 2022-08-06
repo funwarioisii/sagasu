@@ -17,7 +17,7 @@ ginza = "^3.1.2"
 pillow = "^7.1.2"
 numpy = "^1.18.4"
 tensorflow = {version = "^2.2.0", optional = true}
-streamlit = "^0.64.0"
+streamlit = ">=0.64,<1.12"
 
 
 [tool.poetry.dev-dependencies]
